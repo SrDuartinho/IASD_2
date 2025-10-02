@@ -1,5 +1,8 @@
 import search
 
+#gaurdar estados
+state = []
+
 class GardenerProblem(search.Problem):
     
     def __init__(self):
@@ -9,6 +12,7 @@ class GardenerProblem(search.Problem):
         self.flower_list = []  
         self.W0 = 0
         self.start = (0,0)
+
 
     def load(self, fh):
         file_lines = [
@@ -37,7 +41,33 @@ class GardenerProblem(search.Problem):
                 file_line_marker += 1
 
             self.garden_map = garden_map
+
+            #definicao do state inicial 
+            self.state = garden_map
+
             self.flower_list = flower_list
+
+    def actions(self,state):
+        
+        possible_moves = []
+        #if up move is possible
+        if((state["y"]!=0) and (state["map"][state["y"]-1][state["x"]]>-1)):
+            possible_moves.append("U")
+        
+        #if up down is possible
+        if((state["y"] < (self.N - 1)) and (state["map"][state["y"]+1][state["x"]]>-1)):      
+            possible_moves.append("D")
+
+        #if up left is possible
+        if((state["x"]!=0) and (state["map"][state["y"]][state["x"]-1]>-1)):
+            possible_moves.append("L")
+
+        #if up right is possible
+        if((state["x"] < (self.M - 1)) and (state["map"][state["y"]][state["x"]+1]>-1)):
+            possible_moves.append("R")
+
+        return possible_moves
+
     
     def check_solution(self, plan, verbose = False):
         time = 0
@@ -107,16 +137,18 @@ class GardenerProblem(search.Problem):
 
 
 #testes
-#problem = GardenerProblem()
+problem = GardenerProblem()
 
-#with open("ex8.dat") as fh:
-   # problem.load(fh)
+with open("ex3.dat") as fh:
+    problem.load(fh)
 
-#with open("ex8.plan") as fh:
-    #plan = fh.read().strip()  # se o plano for uma única linha
+state.append({"map":problem.garden_map , "x": 2, "y": 1})
+
+moves = problem.actions(state[0])
 
 
+print(moves[1])
 #print(problem.N, problem.M, problem.W0)
-#print(problem.garden_map)
+#print(problem.garden_map[0][0])
 #print(problem.flower_list)
 #print(problem.check_solution(plan, verbose=True))
