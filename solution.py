@@ -136,6 +136,10 @@ class GardenerProblem(search.Problem):
         plants = {(j,i) for i in range(self.N) for j in range(self.M) if self.garden_map[i][j]>0}
 
         return plants.issubset(state["is_watered"])
+        
+    def pathcost(self,c,state1,action,state2):
+       
+        return c+1
     
     def check_solution(self, plan, verbose = False):
         time = 0
