@@ -3,6 +3,7 @@ import search
 #gaurdar estados
 state = []
 
+
 class GardenerProblem(search.Problem):
     
     def __init__(self):
@@ -12,6 +13,7 @@ class GardenerProblem(search.Problem):
         self.flower_list = []  
         self.W0 = 0
         self.start = (0,0)
+        self.state_num = 0
 
 
     def load(self, fh):
@@ -72,12 +74,18 @@ class GardenerProblem(search.Problem):
 
     def result(self, state, action):
         """Return new state dict after applying action"""
+
+        #New_state_identification
+        self.state_num += 1
+
         new_state = {
             "x": state["x"],
             "y": state["y"],
             "water": state["water"],
             "time": state["time"] + 1,
-            "is_watered": set(state["is_watered"])
+            "is_watered": set(state["is_watered"]),
+            "state_num" : self.state_num,
+            "prev_state_num": state["state_num"],
         }
 
         if action == "U":
@@ -99,7 +107,36 @@ class GardenerProblem(search.Problem):
             new_state["water"] = self.W0
 
         return new_state
+    
+    def goaltest(self,state):
+        
 
+        '''
+        FUNCIONA MAS GASTA MAIS MEMORIA NO PIOR CASO PODE É LEVAR MENOS TEMPO
+
+        #Auxiliar variable to find if a certain flower is already watered
+        found = 0
+    
+        for i in range(self.N):
+            for j in range(self.M):
+                #serach for the plant choosen in the watered plant list
+                if self.garden_map[i][j]>0:
+                    found = 0
+                    for plant_watered in state["is_watered"]:
+                        if plant_watered == (i,j): 
+                            found=1
+                            break
+                    #if the plant is not watered then this state is not a goal state
+                    if found == 0:
+                        return False    
+
+        return True
+        '''
+
+        plants = {(j,i) for i in range(self.N) for j in range(self.M) if self.garden_map[i][j]>0}
+
+        return plants.issubset(state["is_watered"])
+    
     def check_solution(self, plan, verbose = False):
         time = 0
         x, y = self.start
@@ -174,13 +211,30 @@ with open("ex3.dat") as fh:
     problem.load(fh)
 
 # start at the initial state
-state = [{"map": problem.garden_map, "x": 0, "y": 0, "water": problem.W0, "time": 0, "is_watered": set()}]
-print("Initial state:", state)
+state.append({"prev_state_num": None,"state_num":0, "x": 0, "y": 0, "water": problem.W0, "time": 0, "is_watered": set()})
+print("Initial state:", state[0])
 
-    # get possible actions
+# get possible actions
 acts = problem.actions(state[0])
 print("Available actions at start:", acts)
 
+state.append(problem.result(state[0],"D"))
+state.append(problem.result(state[1],"D"))
+state.append(problem.result(state[2],"W"))
+state.append(problem.result(state[3],"R"))
+state.append(problem.result(state[4],"R"))
+state.append(problem.result(state[5],"W"))
+state.append(problem.result(state[6],"U"))
+state.append(problem.result(state[7],"W"))
+state.append(problem.result(state[8],"U"))
+state.append(problem.result(state[9],"W"))
+
+print("Final state:", state[10])
+
+print("Veridict:",problem.goaltest(state[10]))
+
+
+'''
     # apply the first action (if any)
 if acts:
     first_action = acts[0]
@@ -193,11 +247,12 @@ if acts:
     print("Available actions from new state:", next_acts)
 
     # apply a watering action if available
-    if "W" in next_acts:
-        watered_state = problem.result(new_state, "W")
+    if "D" in next_acts:
+        watered_state = problem.result(new_state, "D")
         print("\nAfter watering:")
         print("Watered state:", watered_state)
         print("Plants watered:", watered_state["is_watered"])
+'''
 
 #print(problem.N, problem.M, problem.W0)
 #print(problem.garden_map[0][0])
