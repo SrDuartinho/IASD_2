@@ -2,7 +2,7 @@ from solution import GardenerProblem
 
 # Load problem from .dat file
 problem = GardenerProblem()
-with open("ex3.dat") as fh:
+with open("ex8.dat") as fh:
     problem.load(fh)
 
 # Solve the problem
@@ -13,7 +13,7 @@ print("Computed plan:", solution_plan)
 
 # If there's a .plan file, compare results
 try:
-    with open("ex3.plan") as f:
+    with open("ex8.plan") as f:
         expected_plan = f.readline().strip()
         print("Expected plan:", expected_plan)
 

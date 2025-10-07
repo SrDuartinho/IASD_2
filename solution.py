@@ -1,8 +1,5 @@
 import search
 
-#gaurdar estados
-state = []
-
 
 class GardenerProblem(search.Problem):
     
@@ -14,7 +11,8 @@ class GardenerProblem(search.Problem):
         self.W0 = 0
         self.start = (0,0)
         self.state_num = 0
-
+        self.initial = None
+        self.plants = None
 
     def load(self, fh):
         file_lines = [
@@ -48,6 +46,11 @@ class GardenerProblem(search.Problem):
             self.state = garden_map
 
             self.flower_list = flower_list
+
+            self.plants = {(j, i)
+                for i in range(self.N)
+                for j in range(self.M)
+                if self.garden_map[i][j] > 0}
             
             self.initial = (0, 0, self.W0, 0, frozenset())
 
@@ -99,11 +102,8 @@ class GardenerProblem(search.Problem):
     
     def goal_test(self,state):
         x, y, water, time, watered = state
-        plants = {(j, i)
-                for i in range(self.N)
-                for j in range(self.M)
-                if self.garden_map[i][j] > 0}
-        return plants.issubset(watered)
+        
+        return self.plants.issubset(watered)
         
     def path_cost(self,c,state1,action,state2):
        
@@ -114,59 +114,3 @@ class GardenerProblem(search.Problem):
         if node:
             return "".join(node.solution())
         return None
-
-#testes
-'''
-problem = GardenerProblem()
-
-with open("ex3.dat") as fh:
-    problem.load(fh)
-
-# start at the initial state
-state.append({"prev_state_num": None,"state_num":0, "x": 0, "y": 0, "water": problem.W0, "time": 0, "is_watered": set()})
-print("Initial state:", state[0])
-
-# get possible actions
-acts = problem.actions(state[0])
-print("Available actions at start:", acts)
-
-state.append(problem.result(state[0],"D"))
-state.append(problem.result(state[1],"D"))
-state.append(problem.result(state[2],"W"))
-state.append(problem.result(state[3],"R"))
-state.append(problem.result(state[4],"R"))
-state.append(problem.result(state[5],"W"))
-state.append(problem.result(state[6],"U"))
-state.append(problem.result(state[7],"W"))
-state.append(problem.result(state[8],"U"))
-state.append(problem.result(state[9],"W"))
-
-print("Final state:", state[10])
-
-print("Veridict:",problem.goaltest(state[10]))
-'''
-
-'''
-    # apply the first action (if any)
-if acts:
-    first_action = acts[0]
-    new_state = problem.result(state[0], first_action)
-    print(f"\nAfter action {first_action}:")
-    print("New state:", new_state)
-
-     # check possible actions from the new state
-    next_acts = problem.actions(new_state)
-    print("Available actions from new state:", next_acts)
-
-    # apply a watering action if available
-    if "D" in next_acts:
-        watered_state = problem.result(new_state, "D")
-        print("\nAfter watering:")
-        print("Watered state:", watered_state)
-        print("Plants watered:", watered_state["is_watered"])
-'''
-
-#print(problem.N, problem.M, problem.W0)
-#print(problem.garden_map[0][0])
-#print(problem.flower_list)
-#print(problem.check_solution(plan, verbose=True))
