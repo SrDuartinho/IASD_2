@@ -3,6 +3,7 @@ import search
 #gaurdar estados
 state = []
 
+
 class GardenerProblem(search.Problem):
     
     def __init__(self):
@@ -12,6 +13,7 @@ class GardenerProblem(search.Problem):
         self.flower_list = []  
         self.W0 = 0
         self.start = (0,0)
+        self.state_num = 0
 
 
     def load(self, fh):
@@ -46,141 +48,105 @@ class GardenerProblem(search.Problem):
             self.state = garden_map
 
             self.flower_list = flower_list
+            
+            self.initial = (0, 0, self.W0, 0, frozenset())
 
     def actions(self, state):
+        x, y, water, time, watered = state
         possible_moves = []
 
-        # movement
-        if state["y"] != 0 and self.garden_map[state["y"]-1][state["x"]] > -1:
+        if y != 0 and self.garden_map[y-1][x] > -1:
             possible_moves.append("U")
-        if state["y"] < (self.N - 1) and self.garden_map[state["y"]+1][state["x"]] > -1:
+        if y < (self.N - 1) and self.garden_map[y+1][x] > -1:
             possible_moves.append("D")
-        if state["x"] != 0 and self.garden_map[state["y"]][state["x"]-1] > -1:
+        if x != 0 and self.garden_map[y][x-1] > -1:
             possible_moves.append("L")
-        if state["x"] < (self.M - 1) and self.garden_map[state["y"]][state["x"]+1] > -1:
+        if x < (self.M - 1) and self.garden_map[y][x+1] > -1:
             possible_moves.append("R")
 
-        # watering
-        cell = self.garden_map[state["y"]][state["x"]]
-        if cell > 0 and (state["x"], state["y"]) not in state["is_watered"]:
+        cell = self.garden_map[y][x]
+        if cell > 0 and (x, y) not in watered:
             wk, dk = self.flower_list[cell-1]
-            if state["water"] >= wk and state["time"] <= dk:
+            if water >= wk and time <= dk:
                 possible_moves.append("W")
 
         return possible_moves
 
 
     def result(self, state, action):
-        """Return new state dict after applying action"""
-        new_state = {
-            "x": state["x"],
-            "y": state["y"],
-            "water": state["water"],
-            "time": state["time"] + 1,
-            "is_watered": set(state["is_watered"])
-        }
+        x, y, water, time, watered = state
+        new_time = time + 1
+        new_watered = set(watered)
 
         if action == "U":
-            new_state["y"] -= 1
+            y -= 1
         elif action == "D":
-            new_state["y"] += 1
+            y += 1
         elif action == "L":
-            new_state["x"] -= 1
+            x -= 1
         elif action == "R":
-            new_state["x"] += 1
+            x += 1
         elif action == "W":
-            cell = self.garden_map[state["y"]][state["x"]]
+            cell = self.garden_map[y][x]
             wk, _ = self.flower_list[cell-1]
-            new_state["water"] -= wk
-            new_state["is_watered"].add((state["x"], state["y"]))
+            water -= wk
+            new_watered.add((x, y))
 
-        # refill water if back at start
-        if (new_state["x"], new_state["y"]) == (0, 0):
-            new_state["water"] = self.W0
+        if (x, y) == (0, 0):
+            water = self.W0
 
-        return new_state
-
-    def check_solution(self, plan, verbose = False):
-        time = 0
-        x, y = self.start
-        water_level = self.W0
-         
-        moves = {"U": (-1, 0), "D": (1, 0), "L": (0, -1), "R": (0, 1)}
-        is_watered = set()
+        return (x, y, water, new_time, frozenset(new_watered))
+    
+    def goal_test(self,state):
+        x, y, water, time, watered = state
+        plants = {(j, i)
+                for i in range(self.N)
+                for j in range(self.M)
+                if self.garden_map[i][j] > 0}
+        return plants.issubset(watered)
         
-        for action in plan:
-           
-            if action in moves:
-                dx, dy = moves[action]
-                x, y = x + dx, y + dy
-                #print (f"({x}, {y}) at step {time}")
-                if not (0 <= x < self.N and 0 <= y < self.M):
-                    if verbose:
-                        print(f"Invalid move to ({x}, {y}) - out of bounds.")
-                    return False
-                
-                if self.garden_map[x][y] == -1: 
-                    if verbose:
-                        print(f"Invalid move to ({x}, {y}) - obstacle encountered.")
-                    return False
-                
-                if (x, y) == (0, 0):
-                    water_level = self.W0
-
-            elif action == "W":
-                cell = self.garden_map[x][y]
-
-                if cell <= 0: 
-                    if verbose: print(f"No plant at ({x},{y}) step {time}")
-                    return False
-
-                if (x, y) in is_watered:
-                    if verbose: print(f"Plant already watered at ({x},{y})")
-                    return False
-
-                wk, dk = self.flower_list[cell-1] 
-                if water_level < wk:
-                    if verbose: print(f"Not enough water at step {time}")
-                    return False
-
-                if time > dk:
-                    if verbose: print(f"Deadline missed for plant at ({x},{y}) at step {time}")
-                    return False
-
-                water_level -= wk
-                is_watered.add((x, y))
-
-            else:
-                if verbose: print(f"Invalid action '{action}' at step {time}")
-                return False
-            time += 1
-
-        # verificar se todas as plantas ja foram regadas
-        all_plants = {(i, j) for i in range(self.N) for j in range(self.M)
-                      if self.garden_map[i][j] > 0}
-        if is_watered != all_plants:
-            if verbose:
-                missing = all_plants - is_watered
-                print(f"Not all plants watered, missing: {missing}")
-            return False
-        return True
-        
-
+    def path_cost(self,c,state1,action,state2):
+       
+        return c+1
+    
+    def solve(self):
+        node = search.breadth_first_graph_search(self)
+        if node:
+            return "".join(node.solution())
+        return None
 
 #testes
+'''
 problem = GardenerProblem()
 
 with open("ex3.dat") as fh:
     problem.load(fh)
 
 # start at the initial state
-state = [{"map": problem.garden_map, "x": 0, "y": 0, "water": problem.W0, "time": 0, "is_watered": set()}]
-print("Initial state:", state)
+state.append({"prev_state_num": None,"state_num":0, "x": 0, "y": 0, "water": problem.W0, "time": 0, "is_watered": set()})
+print("Initial state:", state[0])
 
-    # get possible actions
+# get possible actions
 acts = problem.actions(state[0])
 print("Available actions at start:", acts)
 
+state.append(problem.result(state[0],"D"))
+state.append(problem.result(state[1],"D"))
+state.append(problem.result(state[2],"W"))
+state.append(problem.result(state[3],"R"))
+state.append(problem.result(state[4],"R"))
+state.append(problem.result(state[5],"W"))
+state.append(problem.result(state[6],"U"))
+state.append(problem.result(state[7],"W"))
+state.append(problem.result(state[8],"U"))
+state.append(problem.result(state[9],"W"))
+
+print("Final state:", state[10])
+
+print("Veridict:",problem.goaltest(state[10]))
+'''
+
+'''
     # apply the first action (if any)
 if acts:
     first_action = acts[0]
@@ -193,11 +159,12 @@ if acts:
     print("Available actions from new state:", next_acts)
 
     # apply a watering action if available
-    if "W" in next_acts:
-        watered_state = problem.result(new_state, "W")
+    if "D" in next_acts:
+        watered_state = problem.result(new_state, "D")
         print("\nAfter watering:")
         print("Watered state:", watered_state)
         print("Plants watered:", watered_state["is_watered"])
+'''
 
 #print(problem.N, problem.M, problem.W0)
 #print(problem.garden_map[0][0])
