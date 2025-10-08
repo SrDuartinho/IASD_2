@@ -58,15 +58,16 @@ class GardenerProblem(search.Problem):
         x, y, water, time, watered = state
         possible_moves = []
 
-        if y != 0 and self.garden_map[y-1][x] > -1:
-            possible_moves.append("U")
-        if y < (self.N - 1) and self.garden_map[y+1][x] > -1:
-            possible_moves.append("D")
-        if x != 0 and self.garden_map[y][x-1] > -1:
-            possible_moves.append("L")
         if x < (self.M - 1) and self.garden_map[y][x+1] > -1:
             possible_moves.append("R")
-
+        if y != 0 and self.garden_map[y-1][x] > -1:
+            possible_moves.append("U")
+        if x != 0 and self.garden_map[y][x-1] > -1:
+            possible_moves.append("L")     
+        if y < (self.N - 1) and self.garden_map[y+1][x] > -1:
+            possible_moves.append("D")
+        
+    
         cell = self.garden_map[y][x]
         if cell > 0 and (x, y) not in watered:
             wk, dk = self.flower_list[cell-1]
