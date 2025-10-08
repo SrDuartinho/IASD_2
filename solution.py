@@ -86,6 +86,12 @@ class GardenerProblem(search.Problem):
             _, dk = self.flower_list[self.garden_map[py][px] - 1]
             if time > dk:
                 return []
+            
+        cell = self.garden_map[y][x]
+        if cell > 0 and (x, y) not in watered:
+            wk, dk = self.flower_list[cell-1]
+            if water >= wk and time <= dk:
+                possible_moves.append("W")
 
         if x < (self.M - 1) and self.garden_map[y][x+1] > -1:
             possible_moves.append("R")
@@ -96,13 +102,6 @@ class GardenerProblem(search.Problem):
         if y < (self.N - 1) and self.garden_map[y+1][x] > -1:
             possible_moves.append("D")
         
-    
-        cell = self.garden_map[y][x]
-        if cell > 0 and (x, y) not in watered:
-            wk, dk = self.flower_list[cell-1]
-            if water >= wk and time <= dk:
-                possible_moves.append("W")
-
         return possible_moves
 
 
@@ -135,17 +134,27 @@ class GardenerProblem(search.Problem):
         
         return self.plants.issubset(watered)
     
-    def h(self,node):
+    def h(self, node):
         x, y, water, time, watered = node.state
         unwatered = self.plants - watered
         if not unwatered:
             return 0
 
-        min_dist = min(abs(x - px) + abs(y - py) for (px, py) in unwatered)
-        if water == 0:
-            min_dist += abs(x - 0) + abs(y - 0)
-        return min_dist
-    
+        avg_dist = sum(abs(x - px) + abs(y - py) for (px, py) in unwatered) / len(unwatered)
+
+        total_needed = sum(self.flower_list[self.garden_map[py][px] - 1][0] for (px, py) in unwatered)
+
+        refill_cost = 0
+        if water < total_needed:
+            trips_needed = (total_needed - water + self.W0 - 1) // self.W0 
+            dist_base = abs(x - 0) + abs(y - 0)
+            refill_cost = trips_needed * dist_base
+
+        flower_penalty = len(unwatered)
+        time_penalty = 0.1 * time
+
+        return avg_dist + refill_cost + flower_penalty + time_penalty
+        
     def path_cost(self,c,state1,action,state2):
        
         return c+1
