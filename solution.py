@@ -57,6 +57,11 @@ class GardenerProblem(search.Problem):
     def actions(self, state):
         x, y, water, time, watered = state
         possible_moves = []
+        
+        for (px, py) in self.plants - watered:
+            _, dk = self.flower_list[self.garden_map[py][px] - 1]
+            if time > dk:
+                return []
 
         if x < (self.M - 1) and self.garden_map[y][x+1] > -1:
             possible_moves.append("R")
@@ -105,13 +110,24 @@ class GardenerProblem(search.Problem):
         x, y, water, time, watered = state
         
         return self.plants.issubset(watered)
-        
+    
+    def h(self,node):
+        x, y, water, time, watered = node.state
+        unwatered = self.plants - watered
+        if not unwatered:
+            return 0
+
+        min_dist = min(abs(x - px) + abs(y - py) for (px, py) in unwatered)
+        if water == 0:
+            min_dist += abs(x - 0) + abs(y - 0)
+        return min_dist
+    
     def path_cost(self,c,state1,action,state2):
        
         return c+1
     
     def solve(self):
-        node = search.breadth_first_graph_search(self)
+        node = search.astar_search(self, self.h)
         if node:
             return "".join(node.solution())
         return None
