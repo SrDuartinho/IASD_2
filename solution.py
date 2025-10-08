@@ -13,6 +13,7 @@ class GardenerProblem(search.Problem):
         self.state_num = 0
         self.initial = None
         self.plants = None
+        self.all_obstacles = None
 
     def load(self, fh):
         file_lines = [
@@ -51,8 +52,31 @@ class GardenerProblem(search.Problem):
                 for i in range(self.N)
                 for j in range(self.M)
                 if self.garden_map[i][j] > 0}
+
+            self.all_obstacles = {(j, i)
+                for i in range(self.N)
+                for j in range(self.M)
+                if self.garden_map[i][j] != 0}
+
+            for i in range(self.N):
+                for j in range(self.M):
+
+                    if self.garden_map[i][j] <= 0:
+                        if not any(i == y or j == x for (x, y) in self.all_obstacles):
+                            cells_around = []
+                            for dy in [-1, 0, 1]:
+                                for dx in [-1, 0, 1]:
+                                    if dx == 0 and dy == 0:
+                                        continue
+                                    ny, nx = i + dy, j + dx
+                                    if 0 <= ny < self.N and 0 <= nx < self.M:
+                                        cells_around.append(self.garden_map[ny][nx])
+
+                            if all(v <= 0 for v in cells_around):
+                                self.garden_map[i][j] = -1
             
             self.initial = (0, 0, self.W0, 0, frozenset())
+
 
     def actions(self, state):
         x, y, water, time, watered = state
