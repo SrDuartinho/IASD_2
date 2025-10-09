@@ -144,16 +144,31 @@ class GardenerProblem(search.Problem):
 
         total_needed = sum(self.flower_list[self.garden_map[py][px] - 1][0] for (px, py) in unwatered)
 
-        refill_cost = 0
+        trips_needed = 0
         if water < total_needed:
-            trips_needed = (total_needed - water + self.W0 - 1) // self.W0 
-            dist_base = abs(x - 0) + abs(y - 0)
-            refill_cost = trips_needed * dist_base
+            trips_needed = (total_needed - water + self.W0 - 1) // self.W0
 
-        flower_penalty = len(unwatered)
-        time_penalty = 0.1 * time
+        dist_to_base = abs(x - 0) + abs(y - 0)
+        refill_cost = trips_needed * (dist_to_base + 2)
 
-        return avg_dist + refill_cost + flower_penalty + time_penalty
+        urgent_flowers = [
+            (dk - time)
+            for (px, py) in unwatered
+            for (_, dk) in [self.flower_list[self.garden_map[py][px] - 1]]
+            if dk - time < 20
+        ]
+        urgency_penalty = sum(1 + (20 - u) / 10 for u in urgent_flowers)
+
+        spread_penalty = 0
+        if len(unwatered) > 1:
+            cx = sum(px for (px, _) in unwatered) / len(unwatered)
+            cy = sum(py for (_, py) in unwatered) / len(unwatered)
+            spread_penalty = sum(abs(px - cx) + abs(py - cy) for (px, py) in unwatered) / len(unwatered)
+
+        time_penalty = 0.05 * time
+
+        return ( avg_dist * 1.2 + refill_cost * 1.5 + urgency_penalty * 2.0
+            + spread_penalty * 0.5 + len(unwatered) * 1.0 + time_penalty)
         
     def path_cost(self,c,state1,action,state2):
        
